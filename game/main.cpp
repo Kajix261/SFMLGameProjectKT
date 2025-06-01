@@ -14,6 +14,11 @@
 #define HALF 0.5, 0.5
 #define LIMIT 1200
 
+enum GameMode {
+    menu,
+    game_on,
+    game_over
+};
 
 Player create_player() {
 
@@ -235,7 +240,7 @@ sf::Text load_score(Player& player, sf::Font& font) {
     return text;
 }
 
-sf::Text string_score(sf::Font& font, std::string name, float x, float y, float size) {
+sf::Text string_text(sf::Font& font, std::string name, float x, float y, float size) {
     sf::Text text;
 
     text.setFont(font);
@@ -245,6 +250,22 @@ sf::Text string_score(sf::Font& font, std::string name, float x, float y, float 
     text.setPosition(sf::Vector2f(x, y));
 
     return text;
+}
+
+//Menu
+
+void show_menu(sf::RenderWindow& window, sf::Font & font, GameMode& gameState, std::string best, std::string last) {
+    sf::Text title = string_text(font, "Skybound Score", WIDTH * 0.4, HEIGHT * 0.3, 100);
+    sf::Text play_option = string_text(font, "Press Space or W to Play", WIDTH * 0.4 - 40, HEIGHT * 0.3 + 100.0, 40);
+    sf::Text exit_option = string_text(font, "Press Esc or Exit", WIDTH * 0.4 - 150, HEIGHT * 0.3 + 150.0, 40);
+    sf::Text best_text = string_text(font, "Best Run:" + best, WIDTH * 0.5, HEIGHT * 0.3 + 250.0, 40);
+    sf::Text last_text = string_text(font, "Last Run:" + last, WIDTH * 0.5, HEIGHT * 0.3 + 300.0, 40);
+
+    window.draw(title);
+    window.draw(play_option);
+    window.draw(exit_option);
+    window.draw(best_text);
+    window.draw(last_text);
 }
 
 void save_run(int score, const std::string& filename) {
@@ -282,6 +303,7 @@ int main()
     // Game variables
     srand(static_cast<unsigned int>(time(0)));
     bool end = false;
+    bool pause = false;
     float velocity_progress = 0;
     int spawned = 0;
     sf::Clock clock;
@@ -308,6 +330,9 @@ int main()
     // Create player
     Player player = create_player();
 
+    //Game state
+    GameMode game_state = menu;
+
     //Game loop
     while (window.isOpen()) {
         sf::Time elapsed_time = clock.restart();
@@ -316,37 +341,103 @@ int main()
 
         sf::Event event;
         while (window.pollEvent(event)) {
-            if (event.type == sf::Event::Closed)
+            if (event.type == sf::Event::Closed){
                 window.close();
-            
-        }
-        //Platform methods
-        set_update(elapsed_time, progress_time, sets, player, velocity_progress);
-        spawn_set(sets, spawned);
-        clear_set(sets);
-
-        //Player Methods
-        player.movement(elapsed_time);
-        player.update(elapsed_time, sets);
-        if (!end) {
-            player.gain_score(game_time);
-        }
-
-        window.clear(sf::Color::Black);
-
-        for (auto& set : sets) {
-            for (const auto& platform : set.platforms) {
-                window.draw(platform);
             }
-            for (const auto& bonus : set.bonuses) {
-                window.draw(*bonus);
+            if (event.type == sf::Event::KeyPressed) {
+                if (game_state == game_on && sf::Keyboard::isKeyPressed(sf::Keyboard::Tab)) {
+                    pause = !pause;
+                }
+                if (game_state == menu && (sf::Keyboard::isKeyPressed(sf::Keyboard::W) || sf::Keyboard::isKeyPressed(sf::Keyboard::Space))) {
+                    game_state = game_on;
+                    end = false; //reset end state
+                    progress_time = sf::Time::Zero; //reset progress time
+                    end_time = sf::Time::Zero; // reste velocity multiplier
+                    velocity_progress = 0;
+                    spawned = 0;
+                }
+                if (game_state == menu && sf::Keyboard::isKeyPressed(sf::Keyboard::Escape)) {
+                    window.close();
+                }
             }
-
-            
         }
-        window.draw(score);
-        window.draw(player);
-        window.display();
+
+        if (game_state == game_on) {
+            if (!pause) {
+                //Platform methods
+                set_update(elapsed_time, progress_time, sets, player, velocity_progress);
+                spawn_set(sets, spawned);
+                clear_set(sets);
+
+                //Player Methods
+                player.movement(elapsed_time);
+                player.update(elapsed_time, sets);
+                if (!end) {
+                    player.gain_score(game_time);
+                }
+            }
+            window.clear(sf::Color::Black);
+
+            for (auto& set : sets) {
+                for (const auto& platform : set.platforms) {
+                    window.draw(platform);
+                }
+                for (const auto& bonus : set.bonuses) {
+                    window.draw(*bonus);
+                }
+
+
+            }
+            //render in game
+            window.draw(score);
+            window.draw(player);
+
+            if (pause) {
+                window.draw(string_text(font, "Pause", WIDTH / 2, HEIGHT / 2, 100));
+            }
+            if (end) {
+                player.lost();
+                end_time += elapsed_time;
+                window.draw(string_text(font, "GAME OVER", WIDTH / 2, HEIGHT / 2, 100));
+                if (end_time.asSeconds() >= 2) {
+                    end = false;
+                    game_state = menu;
+                    //saving score
+                    int current_run = player.score;
+                    int best_run = std::stoi(load_best_run());
+
+                    save_run(current_run, "lastrun.txt");
+
+                    if( current_run > best_run) {
+                        save_run(current_run, "bestrun.txt");
+                    }
+                    std::string string_best_run = load_best_run();
+                    std::string string_last_run = load_last_run();
+
+                    //resetting 
+                    std::cout << "Score:\n" << player.score << "\n Coins Collected \n" << player.collected;
+                    player.reset();
+                    sets.clear();
+                    sets.emplace_back(create_starting_set());
+                    sf::sleep(sf::seconds(1));
+                }
+            }
+            window.display();
+        }
+        else if (game_state == menu && !end) {
+            player.animate(elapsed_time);
+            window.clear(sf::Color::Black);
+            window.draw(player);
+            show_menu(window, font, game_state, string_best_run, string_last_run);
+            window.display();
+        }
+
+
+
+
+        
+
+
     }
     return 0;
 }
