@@ -1,4 +1,5 @@
 #include "Player.h"
+#include "Bonus.h"
 
 #include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
@@ -34,7 +35,11 @@ Player create_player() {
 Set create_starting_set() {
     Set set;
     sf::Texture ground_platform_texture;
+    sf::Texture coin_texture;
+    sf::Texture star_texture;
     ground_platform_texture.loadFromFile("resources/ground_platform.png");
+    coin_texture.loadFromFile("resources/coin.png");
+    star_texture.loadFromFile("resources/star.png");
 
     set.add_platform(ground_platform_texture, sf::Vector2f(50.0, 600.0), sf::Vector2f(HALF));
 
@@ -44,8 +49,19 @@ Set create_starting_set() {
 Set create_set_1() {
     Set set;
     sf::Texture platform_texture;
+    sf::Texture coin_texture;
+    sf::Texture star_texture;
 
     platform_texture.loadFromFile("resources/platform.png");
+    coin_texture.loadFromFile("resources/coin.png");
+    star_texture.loadFromFile("resources/star.png");
+
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            Bonus* coin = new Coin(coin_texture, sf::Vector2f(WIDTH + i * 210 + j * 50, 550 - i * 90));
+            set.add_bonus(coin);
+        }
+    }
 
     set.add_platform(platform_texture, sf::Vector2f(WIDTH, 600.0), sf::Vector2f(HALF));
     set.add_platform(platform_texture, sf::Vector2f(WIDTH + 200.0, 510.0), sf::Vector2f(HALF));
@@ -59,9 +75,19 @@ Set create_set_2() {
     Set set;
     sf::Texture platform_texture;
     sf::Texture small_platform_texture;
+    sf::Texture coin_texture;
+    sf::Texture star_texture;
+
 
     platform_texture.loadFromFile("resources/platform.png");
     small_platform_texture.loadFromFile("resources/small_platform.png");
+    coin_texture.loadFromFile("resources/coin.png");
+    star_texture.loadFromFile("resources/star.png");
+
+    for (int i = 0; i < 2; i++) {
+        Bonus* coin = new Coin(coin_texture, sf::Vector2f(WIDTH + 260 + i * 500, 500));
+        set.add_bonus(coin);
+    }
 
     set.add_platform(platform_texture, sf::Vector2f(WIDTH, 600), sf::Vector2f(HALF));
     set.add_platform(small_platform_texture, sf::Vector2f(WIDTH + 250, 550), sf::Vector2f(HALF));
@@ -76,7 +102,16 @@ Set create_set_2() {
 Set create_set_break() {
     Set set;
     sf::Texture ground_platform_texture;
+    sf::Texture coin_texture;
+    sf::Texture star_texture;
     ground_platform_texture.loadFromFile("resources/ground_platform.png");
+    coin_texture.loadFromFile("resources/coin.png");
+    star_texture.loadFromFile("resources/star.png");
+
+    for (int i = 1; i < 13; i++) {
+        Bonus* coin = new Coin(coin_texture, sf::Vector2f(WIDTH + 100 * i, 550));
+        set.add_bonus(coin);
+    }
 
     set.add_platform(ground_platform_texture, sf::Vector2f(WIDTH, 600), sf::Vector2f(HALF));
 
@@ -130,7 +165,11 @@ void clear_set(std::vector<Set>& sets) {
     Platform& last_platform = first_set.platforms.back();
 
     if (last_platform.getPosition().x + last_platform.getGlobalBounds().width <= 0) {
-        
+        // Clean up bonuses
+        for (auto bonus : first_set.bonuses) {
+            delete bonus;
+        }
+        sets.erase(sets.begin());
     }
 }
 
@@ -160,6 +199,16 @@ void set_update(sf::Time& elapsed_time, sf::Time& progress_time, std::vector<Set
             platform.move(o_velocity * elapsed_time.asSeconds(), 0.0);
         }
 
+        for (auto it = set.bonuses.begin(); it != set.bonuses.end();) {
+            (*it)->move(o_velocity * elapsed_time.asSeconds(), 0.0);
+            if ((*it)->interaction(player)) {
+                delete* it;
+                it = set.bonuses.erase(it);
+            }
+            else {
+                it++;
+            }
+        }
     }
 }
 
@@ -219,9 +268,13 @@ int main()
             for (const auto& platform : set.platforms) {
                 window.draw(platform);
             }
+            for (const auto& bonus : set.bonuses) {
+                window.draw(*bonus);
+            }
 
             
         }
+//        window.draw(score);
         window.draw(player);
         window.display();
     }

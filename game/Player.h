@@ -9,9 +9,12 @@ enum class State {
 
 };
 
+class Bonus;
+
 struct Set {
 	std::vector<Platform> platforms;
 	std::vector<sf::Texture> platform_textures;
+	std::vector<Bonus*> bonuses;
 
 	float objects_velocity = -200.0;
 
@@ -19,6 +22,10 @@ struct Set {
 		platform_textures.push_back(texture);
 		platforms.emplace_back(texture, position);
 		platforms.back().setScale(scale);
+	}
+
+	void add_bonus(Bonus* bonus) {
+		bonuses.push_back(bonus);
 	}
 };
 
@@ -39,6 +46,10 @@ private:
 	State attitude = State::passive;
 
 public:
+	unsigned int score;
+	unsigned int collected;
+	unsigned int multiplier;
+
 	//contructors
 	Player(sf::Texture t, sf::Vector2f p, int af);
 	~Player();
@@ -48,6 +59,7 @@ public:
 	void collision(std::vector<Set>& sets);
 	//game info
 	void lost();
+	void gain_score(sf::Time& game_time);
 	//info methods
 	State get_attitude();
 	//update

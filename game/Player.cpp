@@ -5,6 +5,9 @@ Player::Player(sf::Texture t, sf::Vector2f p, int af) : AnimatedObject(t, p, af)
     this->setTexture(texture);
     this->setPosition(position);
 
+    score = 0;
+    collected = 0;
+    multiplier = 1;
 }
 
 Player::~Player() {
@@ -103,6 +106,11 @@ void Player::lost() {
     state_velocity = 0;
 }
 
+void Player::gain_score(sf::Time& game_time){
+    score += multiplier * game_time.asMicroseconds();
+}
+
+
 void Player::update(sf::Time& elapsed_time, std::vector<Set>& sets) {
     if (attitude == State::passive) {
         this->animate(elapsed_time);
@@ -115,7 +123,11 @@ void Player::reset() {
     this->attitude = State::passive;
     this->position = sf::Vector2f(220.0, 150.0);
     this->setPosition(position);
+    this->score = 0;
+    this->collected = 0;
+    this->multiplier = 1;
     this->setRotation(0);
+
     this->jump_height = 115.0;
     this->horizontal_velocity = 600.0;
     this->forward_velocity = 200.0;
