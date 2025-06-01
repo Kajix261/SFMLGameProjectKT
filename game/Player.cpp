@@ -2,6 +2,7 @@
 
 
 Player::Player(sf::Texture t, sf::Vector2f p, int af) : AnimatedObject(t, p, af) {
+    this->setTexture(texture);
     this->setPosition(position);
 
 }
@@ -63,6 +64,35 @@ void Player::movement(sf::Time& elapsed_time) {
     this->setPosition(position);
 }
 
+void Player::collision(std::vector<Set>& sets) {
+    bool detected = false;
+
+    for (auto& set : sets) {
+        for (auto& e : set.platforms) {
+            if (this->getPosition().y + this->getGlobalBounds().height >= e.getPosition().y &&
+                this->getPosition().y + this->getGlobalBounds().height <= e.getPosition().y + e.getGlobalBounds().height / 2 &&
+                this->getPosition().x + this->getGlobalBounds().width > e.getPosition().x &&
+                this->getPosition().x < e.getPosition().x + e.getGlobalBounds().width &&
+                jump_velocity >= 0) {
+
+                // std::cout << "Collision detected at platform: " << e.getPosition().x << ", " << e.getPosition().y << "\n";
+                detected = true;
+                state = State::stable;
+
+                break;
+            }
+            else {
+                state = State::in_air;
+            }
+        }
+        if (detected) {
+            break;
+
+        }
+    }
+
+}
+
 void Player::lost() {
 
     object_time = sf::seconds(-2);
@@ -73,10 +103,11 @@ void Player::lost() {
     state_velocity = 0;
 }
 
-void Player::update(sf::Time& elapsed_time) {
+void Player::update(sf::Time& elapsed_time, std::vector<Set>& sets) {
     if (attitude == State::passive) {
         this->animate(elapsed_time);
     }
+    this->collision(sets);
 }
 
 void Player::reset() {
