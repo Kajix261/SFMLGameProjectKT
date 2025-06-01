@@ -36,6 +36,14 @@ Player create_player() {
     return player;
 }
 
+GraphicalObject create_sky() {
+    sf::Texture sky_texture;
+    sky_texture.loadFromFile("resources/sky.png");
+    GraphicalObject sky(sky_texture, sf::Vector2f(0.0, 0.0), sf::IntRect(0, 0, WIDTH, HEIGHT));
+    sky.setScale(1, 2.5);
+
+    return sky;
+}
 
 Set create_starting_set() {
     Set set;
@@ -104,6 +112,34 @@ Set create_set_2() {
     return set;
 }
 
+Set create_set_3() {
+    Set set;
+    sf::Texture small_platform_texture;
+    sf::Texture long_platform_texture;
+    sf::Texture coin_texture;
+    sf::Texture star_texture;
+
+    small_platform_texture.loadFromFile("resources/small_platform.png");
+    long_platform_texture.loadFromFile("resources/long_platform.png");
+    coin_texture.loadFromFile("resources/coin.png");
+    star_texture.loadFromFile("resources/star.png");
+
+    set.add_platform(long_platform_texture, sf::Vector2f(WIDTH, 600), sf::Vector2f(HALF));
+    set.add_platform(small_platform_texture, sf::Vector2f(WIDTH + 200, 700), sf::Vector2f(HALF));
+    set.add_platform(small_platform_texture, sf::Vector2f(WIDTH + 450, 600), sf::Vector2f(HALF));
+    set.add_platform(small_platform_texture, sf::Vector2f(WIDTH + 650, 550), sf::Vector2f(HALF));
+
+    Bonus* star = new Star(star_texture, sf::Vector2f(WIDTH + 200.0, 650.0));
+    set.add_bonus(star);
+
+    for (int i = 0; i < 3; i++) {
+        Bonus* coin = new Coin(coin_texture, sf::Vector2f(WIDTH + 500.0 + i * 50, 540.0 - i * 20));
+        set.add_bonus(coin);
+    }
+
+    return set;
+}
+
 Set create_set_break() {
     Set set;
     sf::Texture ground_platform_texture;
@@ -149,6 +185,10 @@ void spawn_set(std::vector<Set>& sets, int& spawned) {
                 break;
             case 1:
                 set = create_set_2();
+                sets.emplace_back(set);
+                break;
+            case 2:
+                set = create_set_3();
                 sets.emplace_back(set);
                 break;
             default:
@@ -319,8 +359,11 @@ int main()
     std::string string_last_run = load_last_run();
 
     // Create the window
-    sf::RenderWindow window(sf::VideoMode(WIDTH, HEIGHT), "PixelRunner");
+    sf::RenderWindow window(sf::VideoMode(WIDTH, HEIGHT), "Skybound Score");
     window.setFramerateLimit(60);
+
+    //Create sky object
+    GraphicalObject sky = create_sky();
 
     // Create sets objects
     std::vector<Set> sets;
@@ -376,7 +419,8 @@ int main()
                     player.gain_score(game_time);
                 }
             }
-            window.clear(sf::Color::Black);
+            window.clear();
+            window.draw(sky);
 
             for (auto& set : sets) {
                 for (const auto& platform : set.platforms) {
@@ -411,8 +455,8 @@ int main()
                     if( current_run > best_run) {
                         save_run(current_run, "bestrun.txt");
                     }
-                    std::string string_best_run = load_best_run();
-                    std::string string_last_run = load_last_run();
+                    string_best_run = load_best_run();
+                    string_last_run = load_last_run();
 
                     //resetting 
                     std::cout << "Score:\n" << player.score << "\n Coins Collected \n" << player.collected;
@@ -426,17 +470,12 @@ int main()
         }
         else if (game_state == menu && !end) {
             player.animate(elapsed_time);
-            window.clear(sf::Color::Black);
+            window.clear();
+            window.draw(sky);
             window.draw(player);
             show_menu(window, font, game_state, string_best_run, string_last_run);
             window.display();
         }
-
-
-
-
-        
-
 
     }
     return 0;

@@ -1,6 +1,6 @@
 #include "Bonus.h"
 
-Bonus::Bonus(sf::Texture& t, const sf::Vector2f& p){
+Bonus::Bonus(sf::Texture& t, const sf::Vector2f& p) : texture(t){
 	this->setTexture(texture);
 	this->setPosition(p);
 }
@@ -14,6 +14,8 @@ Bonus::~Bonus(){
 Coin::Coin(sf::Texture& t, const sf::Vector2f p) : Bonus(t,p){
 	this->setTexture(texture);
 	this->setPosition(p);
+
+	value = 100;
 }
 
 Coin::~Coin(){
@@ -39,6 +41,8 @@ bool Coin::interaction(Player& player)
 Star::Star(sf::Texture& t, const sf::Vector2f& p) : Bonus(t,p){
 	this->setTexture(texture);
 	this->setPosition(p);
+
+	value = 1;
 }
 
 Star::~Star()

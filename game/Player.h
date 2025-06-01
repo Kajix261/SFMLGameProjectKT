@@ -1,6 +1,7 @@
 #pragma once
 #include "AnimatedObject.h"
 #include "Platform.h"
+#include "Bonus.h"
 
 enum class State {
 	stable,
