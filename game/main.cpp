@@ -221,6 +221,62 @@ void over_borderline(Player& player, sf::RenderWindow& window, bool& end) {
     }
 }
 
+//Score
+sf::Text load_score(Player& player, sf::Font& font) {
+    sf::Text text;
+    std::stringstream string_score;
+    string_score << player.score << " x" << player.multiplier;
+
+    text.setFont(font);
+    text.setString(string_score.str());
+    text.setCharacterSize(30.f);
+    text.setPosition(sf::Vector2f(0.01 * WIDTH, 0.01 * HEIGHT));
+
+    return text;
+}
+
+sf::Text string_score(sf::Font& font, std::string name, float x, float y, float size) {
+    sf::Text text;
+
+    text.setFont(font);
+    text.setString(name);
+    text.setCharacterSize(size);
+    text.setOrigin(text.getGlobalBounds().width / 2, text.getGlobalBounds().height / 2);
+    text.setPosition(sf::Vector2f(x, y));
+
+    return text;
+}
+
+void save_run(int score, const std::string& filename) {
+    std::ofstream file(filename);
+    if (file.is_open()) {
+        file << score;
+        file.close();
+    }
+    else {
+        std::cerr << "Error opening file for writing: " << filename << "\n";
+    }
+}
+
+std::string load_run(const std::string& filename) {
+    std::ifstream file(filename);
+    std::string run;
+    if (file.is_open()) {
+        std::getline(file, run);
+    }
+    else {
+        std::cerr << "Error opening file for reading: " << filename << "\n";
+    }
+    return run;
+}
+
+std::string load_best_run() {
+    return load_run("bestrun.txt");
+}
+std::string load_last_run() {
+    return load_run("lastrun.txt");
+}
+
 int main()
 {
     // Game variables
@@ -229,7 +285,16 @@ int main()
     float velocity_progress = 0;
     int spawned = 0;
     sf::Clock clock;
+    sf::Time game_time = clock.restart();
+    sf::Time end_time = clock.restart();
     sf::Time progress_time;
+    sf::Font font;
+    font.loadFromFile("resources/PixelEmulator-xq08.ttf");
+
+    sf::Text score;
+
+    std::string string_best_run = load_best_run();
+    std::string string_last_run = load_last_run();
 
     // Create the window
     sf::RenderWindow window(sf::VideoMode(WIDTH, HEIGHT), "PixelRunner");
@@ -246,12 +311,14 @@ int main()
     //Game loop
     while (window.isOpen()) {
         sf::Time elapsed_time = clock.restart();
+        score = load_score(player, font);
         over_borderline(player, window, end);
 
         sf::Event event;
         while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed)
                 window.close();
+            
         }
         //Platform methods
         set_update(elapsed_time, progress_time, sets, player, velocity_progress);
@@ -261,6 +328,9 @@ int main()
         //Player Methods
         player.movement(elapsed_time);
         player.update(elapsed_time, sets);
+        if (!end) {
+            player.gain_score(game_time);
+        }
 
         window.clear(sf::Color::Black);
 
@@ -274,7 +344,7 @@ int main()
 
             
         }
-//        window.draw(score);
+        window.draw(score);
         window.draw(player);
         window.display();
     }
