@@ -2,6 +2,7 @@
 #include "AnimatedObject.h"
 #include "Platform.h"
 #include "Bonus.h"
+#include "Enemy.h"
 
 enum class State {
 	stable,
@@ -18,6 +19,8 @@ struct Set {
 	std::vector<Platform> platforms;
 	std::vector<sf::Texture> platform_textures;
 	std::vector<Bonus*> bonuses;
+	std::vector<Enemy> enemies;
+	sf::Texture enemy_texture;
 
 	float objects_velocity = -200.0;
 
@@ -29,6 +32,11 @@ struct Set {
 
 	void add_bonus(Bonus* bonus) {
 		bonuses.push_back(bonus);
+	}
+
+	void add_enemy(Enemy &enemy, sf::Texture &e_texture) {
+		enemies.push_back(enemy);
+		enemy_texture = e_texture;
 	}
 };
 

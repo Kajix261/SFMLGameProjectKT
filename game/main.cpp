@@ -36,6 +36,18 @@ Player create_player() {
     return player;
 }
 
+Enemy create_enemy(const sf::Vector2f &position, sf::Texture &enemy_texture) {
+    Enemy enemy(enemy_texture, position, 2);
+    enemy.setScale(2, 2);
+
+    enemy.add_animation_frame(sf::IntRect(5, 0, 26, 34));
+    enemy.add_animation_frame(sf::IntRect(55, 0, 26, 34));
+    enemy.add_animation_frame(sf::IntRect(105, 0, 26, 34));
+    enemy.add_animation_frame(sf::IntRect(157, 0, 26, 34));
+
+    return enemy;
+}
+
 GraphicalObject create_sky() {
     sf::Texture sky_texture;
     sky_texture.loadFromFile("resources/sky.png");
@@ -64,10 +76,16 @@ Set create_set_1() {
     sf::Texture platform_texture;
     sf::Texture coin_texture;
     sf::Texture star_texture;
+    sf::Vector2f enemy_position(WIDTH + 650, 330.0 - 65);
+    sf::Texture enemy_texture;
 
+    enemy_texture.loadFromFile("resources/enemy1.png");
     platform_texture.loadFromFile("resources/platform.png");
     coin_texture.loadFromFile("resources/coin.png");
     star_texture.loadFromFile("resources/star.png");
+
+    Enemy enemy = create_enemy(enemy_position, enemy_texture);
+    set.add_enemy(enemy, enemy_texture);
 
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
@@ -118,7 +136,10 @@ Set create_set_3() {
     sf::Texture long_platform_texture;
     sf::Texture coin_texture;
     sf::Texture star_texture;
+    sf::Vector2f enemy_position(WIDTH + 100, 600.0 - 65);
+    sf::Texture enemy_texture;
 
+    enemy_texture.loadFromFile("resources/enemy1.png");
     small_platform_texture.loadFromFile("resources/small_platform.png");
     long_platform_texture.loadFromFile("resources/long_platform.png");
     coin_texture.loadFromFile("resources/coin.png");
@@ -128,6 +149,9 @@ Set create_set_3() {
     set.add_platform(small_platform_texture, sf::Vector2f(WIDTH + 200, 700), sf::Vector2f(HALF));
     set.add_platform(small_platform_texture, sf::Vector2f(WIDTH + 450, 600), sf::Vector2f(HALF));
     set.add_platform(small_platform_texture, sf::Vector2f(WIDTH + 650, 550), sf::Vector2f(HALF));
+
+    Enemy enemy = create_enemy(enemy_position, enemy_texture);
+    set.add_enemy(enemy, enemy_texture);
 
     Bonus* star = new Star(star_texture, sf::Vector2f(WIDTH + 200.0, 650.0));
     set.add_bonus(star);
@@ -139,6 +163,8 @@ Set create_set_3() {
 
     return set;
 }
+
+
 
 Set create_set_break() {
     Set set;
@@ -223,6 +249,9 @@ void set_init(std::vector<Set>& sets) {
         for (size_t i = 0; i < set.platforms.size(); i++) {
             set.platforms[i].setTexture(set.platform_textures[i]);
         }
+        for (auto& enemy : set.enemies) {
+            enemy.setTexture(set.enemy_texture);
+        }
     }
 }
 
@@ -243,6 +272,10 @@ void set_update(sf::Time& elapsed_time, sf::Time& progress_time, std::vector<Set
         for (auto& platform : set.platforms) {
             platform.move(o_velocity * elapsed_time.asSeconds(), 0.0);
         }
+        for (auto& enemy : set.enemies) {
+            enemy.update(elapsed_time, o_velocity);
+            enemy.move(o_velocity * elapsed_time.asSeconds(), 0.0);
+        }
 
         for (auto it = set.bonuses.begin(); it != set.bonuses.end();) {
             (*it)->move(o_velocity * elapsed_time.asSeconds(), 0.0);
@@ -254,6 +287,33 @@ void set_update(sf::Time& elapsed_time, sf::Time& progress_time, std::vector<Set
                 it++;
             }
         }
+    }
+}
+
+void fight(Player& player, std::vector<Set>& sets, bool& end) {
+    if (end) return;
+
+    for (auto& set : sets) {
+        for (auto enemy_it = set.enemies.begin(); enemy_it != set.enemies.end();) {
+            auto& enemy = *enemy_it;
+            bool enemy_erased = false;
+
+            if (enemy_erased) continue;
+
+            if (player.getGlobalBounds().intersects(enemy.getGlobalBounds())) {
+                if (player.get_attitude() == State::passive) {
+                    player.rotate(-90);
+                    end = true;
+                    return;
+                }
+                else if (player.get_attitude() == State::attacking) {
+                    enemy_it = set.enemies.erase(enemy_it);
+                    continue;
+                }
+            }
+            ++enemy_it;
+        }
+
     }
 }
 
@@ -418,6 +478,7 @@ int main()
                 if (!end) {
                     player.gain_score(game_time);
                 }
+                fight(player, sets, end);
             }
             window.clear();
             window.draw(sky);
@@ -428,6 +489,10 @@ int main()
                 }
                 for (const auto& bonus : set.bonuses) {
                     window.draw(*bonus);
+                }
+                for (auto& enemy : set.enemies) {
+                    window.draw(enemy);
+
                 }
 
 
