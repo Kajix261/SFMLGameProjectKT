@@ -6,7 +6,9 @@
 enum class State {
 	stable,
 	in_air,
-	passive,
+
+	attacking,
+	passive
 
 };
 
@@ -33,6 +35,8 @@ struct Set {
 class Player : public AnimatedObject
 {
 private:
+	//atacking
+	sf::Time attack_time;
 	//movement variables
 	float jump_velocity = 0;
 	float jump_height = 115.0;
@@ -41,6 +45,8 @@ private:
 	float back_velocity = -300.0;
 	float state_velocity = 50;
 	const float g = 981.0;
+
+	sf::Texture attack_texture;
 
 	//state
 	State state = State::stable;
@@ -58,6 +64,8 @@ public:
 	void movement(sf::Time& elapsed_time);
 	void gravity(sf::Time& elapsed_time);
 	void collision(std::vector<Set>& sets);
+	//atack
+	void attack(sf::Time& elapsed_time);
 	//game info
 	void lost();
 	void gain_score(sf::Time& game_time);

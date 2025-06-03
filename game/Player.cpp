@@ -96,6 +96,20 @@ void Player::collision(std::vector<Set>& sets) {
 
 }
 
+void Player::attack(sf::Time& elapsed_time)
+{
+    this->attack_time += elapsed_time;
+    
+    if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left) &&
+        attitude == State::passive &&
+        attack_time.asSeconds() >= 0.5) {
+        setTextureRect(sf::IntRect(445, 0, 30, 37));
+        std::cout << "you are attacking! \n";
+        this->attitude = State::attacking;
+        this->attack_time = sf::Time::Zero;
+    }
+}
+
 void Player::lost() {
 
     object_time = sf::seconds(-2);
@@ -111,11 +125,19 @@ void Player::gain_score(sf::Time& game_time){
 }
 
 
+
 void Player::update(sf::Time& elapsed_time, std::vector<Set>& sets) {
+    if (attack_time.asSeconds() >= 0.8 && (attitude == State::attacking)) {
+        std::cout << "you are passive\n";
+        this->attitude = State::passive;
+    }
+    
     if (attitude == State::passive) {
         this->animate(elapsed_time);
     }
     this->collision(sets);
+
+    this->attack(elapsed_time);
 }
 
 void Player::reset() {
