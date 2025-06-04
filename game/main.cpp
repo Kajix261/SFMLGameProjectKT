@@ -298,8 +298,23 @@ void fight(Player& player, std::vector<Set>& sets, bool& end) {
             auto& enemy = *enemy_it;
             bool enemy_erased = false;
 
+            //test collision between player's arrows and the enemy
+            for (auto arrow_it = player.arrows.begin(); arrow_it != player.arrows.end();) {
+                if (enemy.getGlobalBounds().intersects((*arrow_it)->getGlobalBounds())) {
+                    delete* arrow_it;
+                    arrow_it = player.arrows.erase(arrow_it);
+                    enemy_it = set.enemies.erase(enemy_it);
+                    enemy_erased = true;
+                    break;
+                }
+                else {
+                    ++arrow_it;
+                }
+            }
+
             if (enemy_erased) continue;
 
+            //test collision between player and the enemy
             if (player.getGlobalBounds().intersects(enemy.getGlobalBounds())) {
                 if (player.get_attitude() == State::passive) {
                     player.rotate(-90);
@@ -314,6 +329,26 @@ void fight(Player& player, std::vector<Set>& sets, bool& end) {
             ++enemy_it;
         }
 
+        //test collision between enemy's arows and the player
+        for (auto& enemy : set.enemies) {
+            for (auto arrow_it = enemy.arrows.begin(); arrow_it != enemy.arrows.end();) {
+                if (player.getGlobalBounds().intersects((*arrow_it)->getGlobalBounds())) {
+                    if (player.get_attitude() == State::attacking) {
+                        player.eq++;
+                    }
+                    else {
+                        player.rotate(-90);
+                        end = true;
+                    }
+                    delete* arrow_it;
+                    arrow_it = enemy.arrows.erase(arrow_it);
+                    break;
+                }
+                else {
+                    ++arrow_it;
+                }
+            }
+        }
     }
 }
 
@@ -348,6 +383,19 @@ sf::Text string_text(sf::Font& font, std::string name, float x, float y, float s
     text.setCharacterSize(size);
     text.setOrigin(text.getGlobalBounds().width / 2, text.getGlobalBounds().height / 2);
     text.setPosition(sf::Vector2f(x, y));
+
+    return text;
+}
+
+sf::Text arrow_amount(Player& player, sf::Font& font) {
+    sf::Text text;
+    std::stringstream string_arrows;
+    string_arrows << "x" << player.eq;
+
+    text.setFont(font);
+    text.setString(string_arrows.str());
+    text.setCharacterSize(30.f);
+    text.setPosition(sf::Vector2f(0.9 * WIDTH, 0.05 * HEIGHT));
 
     return text;
 }
@@ -414,6 +462,9 @@ int main()
     font.loadFromFile("resources/PixelEmulator-xq08.ttf");
 
     sf::Text score;
+    sf::Text a_text;
+    sf::Texture arrow_texture;
+    arrow_texture.loadFromFile("resources/arrow.png");
 
     std::string string_best_run = load_best_run();
     std::string string_last_run = load_last_run();
@@ -433,6 +484,11 @@ int main()
     // Create player
     Player player = create_player();
 
+    // Create a info object
+    GraphicalObject arrow(arrow_texture, sf::Vector2f(0.85 * WIDTH, 0.05 * HEIGHT));
+    arrow.setScale(2.5, 2.5);
+    arrow.rotate(45);
+
     //Game state
     GameMode game_state = menu;
 
@@ -440,6 +496,7 @@ int main()
     while (window.isOpen()) {
         sf::Time elapsed_time = clock.restart();
         score = load_score(player, font);
+        a_text = arrow_amount(player, font);
         over_borderline(player, window, end);
 
         sf::Event event;
@@ -492,14 +549,17 @@ int main()
                 }
                 for (auto& enemy : set.enemies) {
                     window.draw(enemy);
-
+                    enemy.render_arrows(window);
                 }
 
 
             }
             //render in game
+            player.render_arrows(window);
             window.draw(score);
             window.draw(player);
+            window.draw(a_text);
+            window.draw(arrow);
 
             if (pause) {
                 window.draw(string_text(font, "Pause", WIDTH / 2, HEIGHT / 2, 100));

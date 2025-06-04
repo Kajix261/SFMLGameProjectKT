@@ -21,7 +21,7 @@
   <ItemGroup>
     <ClCompile Include="AnimatedObject.cpp" />
     <ClCompile Include="Bonus.cpp" />
-    <ClCompile Include="Bullet.cpp" />
+    <ClCompile Include="Arrow.cpp" />
     <ClCompile Include="Enemy.cpp" />
     <ClCompile Include="GraphicalObject.cpp" />
     <ClCompile Include="main.cpp" />
@@ -31,7 +31,7 @@
   <ItemGroup>
     <ClInclude Include="AnimatedObject.h" />
     <ClInclude Include="Bonus.h" />
-    <ClInclude Include="Bullet.h" />
+    <ClInclude Include="Arrow.h" />
     <ClInclude Include="Enemy.h" />
     <ClInclude Include="GraphicalObject.h" />
     <ClInclude Include="Platform.h" />
