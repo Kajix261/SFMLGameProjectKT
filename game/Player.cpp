@@ -167,7 +167,7 @@ void Player::lost() {
     state_velocity = 0;
 }
 
-void Player::gain_score(sf::Time& game_time){
+void Player::gain_score(sf::Time &game_time){
     score += multiplier * game_time.asMicroseconds();
 }
 

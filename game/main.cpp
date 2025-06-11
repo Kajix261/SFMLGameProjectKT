@@ -164,7 +164,80 @@ Set create_set_3() {
     return set;
 }
 
+Set create_set_4() {
+    Set set;
+    sf::Texture ground_platform_texture;
+    sf::Texture medium_platform_texture;
+    sf::Texture long_platform_texture;
+    sf::Texture platform_texture;
+    sf::Texture coin_texture;
+    sf::Texture star_texture;
+    sf::Texture enemy_texture;
 
+    enemy_texture.loadFromFile("resources/enemy1.png");
+    ground_platform_texture.loadFromFile("resources/ground_platform.png");
+    medium_platform_texture.loadFromFile("resources/medium_platform.png");
+    long_platform_texture.loadFromFile("resources/long_platform.png");
+    platform_texture.loadFromFile("resources/platform.png");
+    coin_texture.loadFromFile("resources/coin.png");
+    star_texture.loadFromFile("resources/star.png");
+
+    for (int i = 0; i < 3; i++) {
+        sf::Vector2f enemy_position(WIDTH + 350 + i * 200, 500 - 65 - i * 100);
+        Enemy enemy = create_enemy(enemy_position, enemy_texture);
+        set.add_enemy(enemy, enemy_texture);
+    }
+
+    for (int i = 0; i < 9; i++) {
+        sf::Vector2f bonus_position(WIDTH + 805 + i * 23, 250);
+        Bonus* bonus;
+        if (i == 8) {
+            bonus = new Star(star_texture, bonus_position);
+        }
+        else {
+            bonus = new Coin(coin_texture, bonus_position);
+        }
+
+        set.add_bonus(bonus);
+    }
+
+
+    set.add_platform(platform_texture, sf::Vector2f(WIDTH + 300.0, 500), sf::Vector2f(HALF));
+    set.add_platform(platform_texture, sf::Vector2f(WIDTH + 500.0, 400), sf::Vector2f(HALF));
+    set.add_platform(long_platform_texture, sf::Vector2f(WIDTH + 700.0, 300), sf::Vector2f(HALF));
+    set.add_platform(ground_platform_texture, sf::Vector2f(WIDTH, 600), sf::Vector2f(HALF));
+
+
+    return set;
+}
+
+Set create_set_5() {
+    Set set;
+    sf::Texture platform_texture;
+    sf::Texture medium_platform_texture;
+    sf::Texture small_platform_texture;
+    sf::Texture coin_texture;
+    sf::Texture enemy_texture;
+
+    enemy_texture.loadFromFile("resources/enemy1.png");
+    platform_texture.loadFromFile("resources/platform.png");
+    small_platform_texture.loadFromFile("resources/small_platform.png");
+    medium_platform_texture.loadFromFile("resources/medium_platform.png");
+    coin_texture.loadFromFile("resources/coin.png");
+
+    sf::Vector2f enemy_position(WIDTH + 100, 550.0 - 65);
+
+    Enemy enemy = create_enemy(enemy_position, enemy_texture);
+
+    Bonus* coin = new Coin(coin_texture, sf::Vector2f(WIDTH + 227, 410));
+    set.add_bonus(coin);
+
+    set.add_platform(medium_platform_texture, sf::Vector2f(WIDTH, 550), sf::Vector2f(HALF));
+    set.add_platform(small_platform_texture, sf::Vector2f(WIDTH + 220, 460), sf::Vector2f(HALF));
+    set.add_platform(platform_texture, sf::Vector2f(WIDTH + 400, 370), sf::Vector2f(HALF));
+
+    return set;
+}
 
 Set create_set_break() {
     Set set;
@@ -215,6 +288,16 @@ void spawn_set(std::vector<Set>& sets, int& spawned) {
                 break;
             case 2:
                 set = create_set_3();
+                sets.emplace_back(set);
+                break;
+                break;
+            case 3:
+                set = create_set_4();
+                sets.emplace_back(set);
+                break;
+                break;
+            case 4:
+                set = create_set_5();
                 sets.emplace_back(set);
                 break;
             default:
