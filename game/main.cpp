@@ -667,7 +667,7 @@ int main()
                     string_last_run = load_last_run();
 
                     //resetting 
-                    std::cout << "Score:\n" << player.score << "\n Coins Collected \n" << player.collected;
+                    std::cout << "Score:\n" << player.score << "\n Coins Collected: \n" << player.collected << "\n";
                     player.reset();
                     sets.clear();
                     sets.emplace_back(create_starting_set());
